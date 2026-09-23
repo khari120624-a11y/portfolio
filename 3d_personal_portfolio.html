@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kukkala Hari Venkat | 3D Interactive Portfolio</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#050814',
+              card: '#0d1527',
+              cyan: '#00f2fe',
+              violet: '#9d4edd',
+              pink: '#f72585',
+              accent: '#3a86ff',
+              linkedin: '#0a66c2'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          },
+          animation: {
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'spin-slow': 'spin 15s linear infinite'
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-12px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Three.js Library CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #050814;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f2fe;
+    }
+
+    /* Glassmorphism Styling */
+    .glass-nav {
+      background: rgba(13, 21, 39, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-card {
+      background: rgba(13, 21, 39, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 12px 40px 0 rgba(0, 242, 254, 0.15);
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.35);
+    }
+
+    /* Fixed WebGL Canvas background */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #hero-canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 380px;
+      cursor: grab;
+    }
+
+    #hero-canvas:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body class="bg-[#050814] text-slate-100 font-sans antialiased selection:bg-brand-cyan selection:text-black overflow-x-hidden relative">
+
+  <!-- Background WebGL 3D Canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 sm:px-8 py-4">
+    <nav class="max-w-7xl mx-auto glass-nav rounded-2xl px-5 py-3 flex items-center justify-between shadow-2xl">
+      <!-- Logo -->
+      <a href="#hero" class="flex items-center gap-2.5 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-cyan via-blue-500 to-brand-violet flex items-center justify-center font-bold text-slate-950 font-mono shadow-lg group-hover:scale-105 transition transform">
+          KHV
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold tracking-wider text-base sm:text-lg bg-gradient-to-r from-white via-slate-200 to-brand-cyan bg-clip-text text-transparent leading-none">
+            Hari Venkat
+          </span>
+          <span class="text-[10px] font-mono text-slate-400 tracking-tight">@khari120624-a11y</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <a href="#hero" class="text-slate-300 hover:text-brand-cyan transition-colors">Home</a>
+        <a href="#about" class="text-slate-300 hover:text-brand-cyan transition-colors">About</a>
+        <a href="#skills" class="text-slate-300 hover:text-brand-cyan transition-colors">Skills</a>
+        <a href="#projects" class="text-slate-300 hover:text-brand-cyan transition-colors">Projects</a>
+        <a href="#experience" class="text-slate-300 hover:text-brand-cyan transition-colors">Experience</a>
+        <a href="#contact" class="text-slate-300 hover:text-brand-cyan transition-colors">Contact</a>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <!-- LinkedIn Link -->
+        <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl glass-card text-slate-300 hover:text-brand-cyan hover:border-brand-cyan/40 transition flex items-center gap-2" title="LinkedIn Profile">
+          <i data-lucide="linkedin" class="w-4 h-4 text-[#0a66c2]"></i>
+          <span class="hidden lg:inline text-xs font-mono">LinkedIn</span>
+        </a>
+
+        <!-- GitHub Link -->
+        <a href="https://github.com/khari120624-a11y" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl glass-card text-slate-300 hover:text-brand-cyan hover:border-brand-cyan/40 transition flex items-center gap-2" title="GitHub Profile">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span class="hidden lg:inline text-xs font-mono">GitHub</span>
+        </a>
+
+        <!-- MoodStream Live Button -->
+        <a href="https://moodstream-2zap.onrender.com" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-cyan to-blue-600 text-slate-950 font-bold text-xs tracking-wider uppercase shadow-md hover:brightness-110 transition transform hover:-translate-y-0.5">
+          <span>MoodStream Live</span>
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-xl glass-card text-slate-300 hover:text-white" aria-label="Toggle Mobile Menu">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Mobile Dropdown Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden max-w-7xl mx-auto mt-2 glass-nav rounded-2xl p-6 flex-col gap-4 border border-slate-800">
+      <a href="#hero" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">Home</a>
+      <a href="#about" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">About</a>
+      <a href="#skills" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">Skills</a>
+      <a href="#projects" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">Projects</a>
+      <a href="#experience" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">Experience</a>
+      <a href="#contact" class="mobile-link text-slate-200 hover:text-brand-cyan py-1 text-base font-medium">Contact</a>
+      <div class="pt-4 border-t border-slate-800 flex flex-col gap-3">
+        <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" class="flex items-center gap-2 text-xs font-mono text-[#0a66c2] hover:underline">
+          <i data-lucide="linkedin" class="w-4 h-4"></i>
+          <span>LinkedIn: Kukkala Hari Venkat</span>
+        </a>
+        <a href="https://github.com/khari120624-a11y" target="_blank" class="flex items-center gap-2 text-xs font-mono text-brand-cyan hover:underline">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span>GitHub: khari120624-a11y</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section id="hero" class="relative z-10 min-h-screen pt-28 pb-16 px-4 sm:px-8 flex items-center justify-center">
+    <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Text Content Left -->
+      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-card text-brand-cyan text-xs font-mono font-medium border border-brand-cyan/30">
+          <span class="w-2 h-2 rounded-full bg-brand-cyan animate-pulse"></span>
+          <span>Data Analyst & Full-Stack Web Developer | AI Enthusiast</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+          Hi, I'm <br />
+          <span class="bg-gradient-to-r from-brand-cyan via-indigo-300 to-brand-violet bg-clip-text text-transparent">
+            KUKKALA HARI VENKAT
+          </span>
+        </h1>
+
+        <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+          Creating interactive WebGL experiences, robust data analytics workflows, and modern web applications. Currently studying B.Tech at Vignan University.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
+          <a href="https://moodstream-2zap.onrender.com" target="_blank" rel="noopener noreferrer" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-cyan via-blue-500 to-brand-violet text-slate-950 font-bold text-sm tracking-wide shadow-lg shadow-brand-cyan/20 hover:shadow-brand-cyan/40 hover:scale-105 transition transform flex items-center gap-2">
+            <i data-lucide="play-circle" class="w-4 h-4"></i>
+            <span>Launch MoodStream</span>
+          </a>
+
+          <!-- LinkedIn CTA Button -->
+          <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" rel="noopener noreferrer" class="px-6 py-3.5 rounded-xl bg-[#0a66c2]/20 border border-[#0a66c2]/50 hover:bg-[#0a66c2]/40 text-white font-semibold text-sm transition transform hover:-translate-y-0.5 flex items-center gap-2">
+            <i data-lucide="linkedin" class="w-4 h-4 text-[#0a66c2]"></i>
+            <span>Connect on LinkedIn</span>
+          </a>
+
+          <!-- GitHub CTA Button -->
+          <a href="https://github.com/khari120624-a11y" target="_blank" rel="noopener noreferrer" class="px-6 py-3.5 rounded-xl glass-card text-slate-200 hover:text-white hover:border-brand-cyan/50 font-semibold text-sm transition transform hover:-translate-y-0.5 flex items-center gap-2">
+            <i data-lucide="github" class="w-4 h-4 text-brand-cyan"></i>
+            <span>GitHub Profile</span>
+          </a>
+        </div>
+
+        <!-- Highlight Badges -->
+        <div class="pt-8 border-t border-slate-800/80 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
+          <div class="glass-card p-3 rounded-xl text-center">
+            <div class="text-xl sm:text-2xl font-extrabold text-white font-mono">10+</div>
+            <div class="text-[11px] text-slate-400">Projects Built</div>
+          </div>
+          <div class="glass-card p-3 rounded-xl text-center">
+            <div class="text-xl sm:text-2xl font-extrabold text-brand-cyan font-mono">3</div>
+            <div class="text-[11px] text-slate-400">Internships</div>
+          </div>
+          <div class="glass-card p-3 rounded-xl text-center">
+            <div class="text-xl sm:text-2xl font-extrabold text-brand-violet font-mono">Vignan</div>
+            <div class="text-[11px] text-slate-400">B.Tech Student</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero 3D Object Canvas Container Right -->
+      <div class="lg:col-span-5 relative flex items-center justify-center">
+        <div class="w-full h-[380px] sm:h-[460px] glass-card rounded-3xl p-4 relative overflow-hidden flex items-center justify-center border border-slate-800">
+          
+          <div class="absolute top-4 left-4 z-20 flex items-center gap-2 text-xs font-mono text-slate-300 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800">
+            <i data-lucide="move-3d" class="w-3.5 h-3.5 text-brand-cyan"></i>
+            <span>Interactive 3D Mesh (Drag & Rotate)</span>
+          </div>
+
+          <!-- 3D Hero Canvas element -->
+          <canvas id="hero-canvas"></canvas>
+
+          <div class="absolute bottom-4 right-4 z-20 text-[10px] font-mono text-slate-500 bg-slate-950/80 px-2 py-1 rounded border border-slate-900">
+            Rendered with Three.js WebGL
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="about" class="relative z-10 py-24 px-4 sm:px-8 bg-brand-dark/80 border-t border-slate-900">
+    <div class="max-w-6xl mx-auto space-y-12">
+      
+      <div class="text-center space-y-3">
+        <h2 class="text-xs font-mono tracking-widest text-brand-cyan uppercase">// Developer Overview</h2>
+        <h3 class="text-3xl sm:text-4xl font-extrabold text-white">About Kukkala Hari Venkat</h3>
+        <div class="w-16 h-1 bg-gradient-to-r from-brand-cyan to-brand-violet mx-auto rounded-full"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <!-- Story card -->
+        <div class="lg:col-span-7 glass-card p-8 rounded-3xl space-y-5 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/30">
+                GitHub: khari120624-a11y
+              </span>
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-[#0a66c2]/10 text-[#0a66c2] border border-[#0a66c2]/30">
+                LinkedIn Verified
+              </span>
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-brand-violet/10 text-brand-violet border border-brand-violet/30">
+                B.Tech CS
+              </span>
+            </div>
+            
+            <h4 class="text-2xl font-bold text-white">
+              Data Analyst, Web Developer & AI Enthusiast
+            </h4>
+            
+            <p class="text-slate-300 leading-relaxed text-sm sm:text-base">
+              I am <strong class="text-white">Kukkala Hari Venkat</strong>, an aspiring Data Analyst and Full-Stack Web Developer currently pursuing my B.Tech degree at <strong>Vignan University</strong>.
+            </p>
+            <p class="text-slate-400 leading-relaxed text-sm">
+              My passion lies at the intersection of web application development, data analytics pipelines, and interactive user interfaces. From building mood-driven audio processing apps like <strong>MoodStream</strong> to performing predictive modeling and data visualization, I aim to solve real-world problems with code.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-brand-cyan/10 text-brand-cyan">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">Education</div>
+                <div class="text-xs font-semibold text-slate-200">Vignan University</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-[#0a66c2]/10 text-[#0a66c2]">
+                <i data-lucide="linkedin" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">LinkedIn</div>
+                <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" class="text-xs font-semibold text-brand-cyan hover:underline">
+                  Hari Venkat
+                </a>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-brand-violet/10 text-brand-violet">
+                <i data-lucide="github" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">GitHub</div>
+                <a href="https://github.com/khari120624-a11y" target="_blank" class="text-xs font-semibold text-brand-cyan hover:underline">
+                  khari120624-a11y
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Quick Cards -->
+        <div class="lg:col-span-5 grid grid-cols-1 gap-4">
+          <div class="glass-card p-6 rounded-2xl space-y-3 hover:-translate-y-1 transition">
+            <div class="flex items-center justify-between">
+              <i data-lucide="music" class="w-8 h-8 text-brand-cyan"></i>
+              <span class="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800">LIVE APP</span>
+            </div>
+            <h5 class="text-xl font-bold text-white">MoodStream Web App</h5>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Live mood-curated music recommendation web application hosted on Render.
+            </p>
+            <a href="https://moodstream-2zap.onrender.com" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-cyan hover:underline pt-1">
+              <span>Open Application</span>
+              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+            </a>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl space-y-3 hover:-translate-y-1 transition">
+            <div class="flex items-center justify-between">
+              <i data-lucide="briefcase" class="w-8 h-8 text-brand-violet"></i>
+              <span class="text-xs font-mono text-slate-400">3 INTERNSHIPS</span>
+            </div>
+            <h5 class="text-xl font-bold text-white">Hands-on Experience</h5>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Internship roles at Axlero Solutions, CodeAlpha, and SkillCraft Technology.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="skills" class="relative z-10 py-24 px-4 sm:px-8">
+    <div class="max-w-6xl mx-auto space-y-12">
+      
+      <div class="text-center space-y-3">
+        <h2 class="text-xs font-mono tracking-widest text-brand-cyan uppercase">// Proficiency & Toolkit</h2>
+        <h3 class="text-3xl sm:text-4xl font-extrabold text-white">Technical Skills</h3>
+        <div class="w-16 h-1 bg-gradient-to-r from-brand-cyan to-brand-violet mx-auto rounded-full"></div>
+      </div>
+
+      <!-- Skills Cards Grid -->
+      <div id="skills-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-cyan-500/10 text-brand-cyan">
+                <i data-lucide="code" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">Python & Data Stack</h4>
+                <p class="text-xs text-slate-400">Pandas, NumPy, EDA</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-brand-cyan font-bold">90%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-brand-cyan to-blue-500 rounded-full w-[90%]"></div>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+                <i data-lucide="database" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">SQL & Databases</h4>
+                <p class="text-xs text-slate-400">MySQL, PostgreSQL, MongoDB</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-indigo-400 font-bold">88%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full w-[88%]"></div>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-brand-violet/10 text-brand-violet">
+                <i data-lucide="layers" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">React.js & Web Dev</h4>
+                <p class="text-xs text-slate-400">JavaScript ES6+, HTML5, CSS3</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-brand-violet font-bold">85%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-brand-violet to-pink-500 rounded-full w-[85%]"></div>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
+                <i data-lucide="box" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">Three.js & 3D WebGL</h4>
+                <p class="text-xs text-slate-400">Interactive Graphics</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-amber-400 font-bold">80%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full w-[80%]"></div>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <i data-lucide="cloud" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">Cloud & Deployment</h4>
+                <p class="text-xs text-slate-400">Render, Netlify, Git/GitHub</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-emerald-400 font-bold">85%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full w-[85%]"></div>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl bg-blue-500/10 text-blue-400">
+                <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">Data Visualization</h4>
+                <p class="text-xs text-slate-400">Power BI, Tableau, Matplotlib</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs text-blue-400 font-bold">82%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full w-[82%]"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="projects" class="relative z-10 py-24 px-4 sm:px-8 bg-brand-dark/80 border-t border-slate-900">
+    <div class="max-w-6xl mx-auto space-y-12">
+      
+      <div class="text-center space-y-3">
+        <h2 class="text-xs font-mono tracking-widest text-brand-cyan uppercase">// Featured Work</h2>
+        <h3 class="text-3xl sm:text-4xl font-extrabold text-white">Projects & Applications</h3>
+        <p class="text-slate-400 text-sm max-w-lg mx-auto">Hover over cards to see 3D tilt interactions.</p>
+        <div class="w-16 h-1 bg-gradient-to-r from-brand-cyan to-brand-violet mx-auto rounded-full"></div>
+      </div>
+
+      <!-- Projects Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- MoodStream Featured Card -->
+        <div class="tilt-card glass-card rounded-3xl overflow-hidden flex flex-col justify-between group transition duration-500 border-2 border-brand-cyan/40">
+          <div class="h-52 bg-gradient-to-br from-cyan-900 via-indigo-900 to-slate-950 p-6 flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-brand-cyan/30 rounded-full blur-2xl group-hover:bg-brand-cyan/50 transition"></div>
+            <div class="flex justify-between items-start relative z-10">
+              <span class="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-slate-950/80 text-brand-cyan border border-brand-cyan/40">
+                ★ FEATURED LIVE APP
+              </span>
+              <a href="https://moodstream-2zap.onrender.com" target="_blank" class="p-2 rounded-xl bg-slate-950/80 text-slate-200 hover:text-white border border-slate-800" title="Launch MoodStream">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+            </div>
+            <div>
+              <h4 class="text-2xl font-bold text-white relative z-10 group-hover:translate-x-1 transition">
+                MoodStream
+              </h4>
+              <p class="text-xs text-brand-cyan font-mono mt-1">https://moodstream-2zap.onrender.com</p>
+            </div>
+          </div>
+
+          <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Full-stack mood-driven music recommendation WebGL application. Features dynamic audio curation based on user emotion input, built and deployed live on Render.
+            </p>
+
+            <div class="space-y-4">
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-cyan-300 border border-slate-800">React</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-cyan-300 border border-slate-800">Node.js</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-cyan-300 border border-slate-800">Render</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-cyan-300 border border-slate-800">Tailwind</span>
+              </div>
+
+              <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                <a href="https://github.com/khari120624-a11y" target="_blank" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition">
+                  <i data-lucide="github" class="w-4 h-4"></i>
+                  <span>khari120624-a11y</span>
+                </a>
+                <a href="https://moodstream-2zap.onrender.com" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-brand-cyan text-slate-950 hover:brightness-110 transition">
+                  <span>Open Live App</span>
+                  <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- India AI Impact Festival Project Card -->
+        <div class="tilt-card glass-card rounded-3xl overflow-hidden flex flex-col justify-between group transition duration-500">
+          <div class="h-52 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-950 p-6 flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-brand-violet/20 rounded-full blur-2xl group-hover:bg-brand-violet/40 transition"></div>
+            <div class="flex justify-between items-start relative z-10">
+              <span class="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-slate-950/80 text-brand-violet border border-brand-violet/30">
+                AI & Machine Learning
+              </span>
+              <a href="https://github.com/khari120624-a11y" target="_blank" class="p-2 rounded-xl bg-slate-950/80 text-slate-300 hover:text-white border border-slate-800">
+                <i data-lucide="github" class="w-4 h-4"></i>
+              </a>
+            </div>
+            <h4 class="text-2xl font-bold text-white relative z-10 group-hover:translate-x-1 transition">
+              India AI Impact Festival Project
+            </h4>
+          </div>
+
+          <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Innovative artificial intelligence project developed for the India AI Impact Festival focusing on social impact metrics, machine learning evaluation models, and data analytics.
+            </p>
+
+            <div class="space-y-4">
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-purple-300 border border-slate-800">Python</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-purple-300 border border-slate-800">Scikit-Learn</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-purple-300 border border-slate-800">Pandas</span>
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-slate-950 text-purple-300 border border-slate-800">AI Analytics</span>
+              </div>
+
+              <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                <a href="https://github.com/khari120624-a11y" target="_blank" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition">
+                  <i data-lucide="github" class="w-4 h-4"></i>
+                  <span>View Repository</span>
+                </a>
+                <span class="text-xs font-mono text-slate-500">AI Challenge</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="experience" class="relative z-10 py-24 px-4 sm:px-8">
+    <div class="max-w-4xl mx-auto space-y-12">
+      
+      <div class="text-center space-y-3">
+        <h2 class="text-xs font-mono tracking-widest text-brand-cyan uppercase">// Professional Milestones</h2>
+        <h3 class="text-3xl sm:text-4xl font-extrabold text-white">Experience & Internships</h3>
+        <div class="w-16 h-1 bg-gradient-to-r from-brand-cyan to-brand-violet mx-auto rounded-full"></div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="relative border-l-2 border-slate-800 ml-4 sm:ml-32 space-y-10">
+        
+        <div class="relative pl-6 sm:pl-8 group">
+          <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border-2 border-brand-cyan group-hover:bg-brand-cyan group-hover:scale-125 transition transform"></div>
+          <div class="sm:absolute sm:-left-36 sm:top-1 text-xs font-mono text-slate-400 mb-2 sm:mb-0">
+            Internship
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl space-y-3 hover:border-brand-cyan/40 transition">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <h4 class="text-lg font-bold text-white">Data Analyst Intern</h4>
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/30 w-fit">
+                Axlero Solutions
+              </span>
+            </div>
+            <ul class="text-slate-300 text-sm space-y-2 list-disc list-inside">
+              <li>Analyzed relational datasets using SQL queries and Python Pandas to extract business insights.</li>
+              <li>Built automated data cleaning scripts and exploratory analytics visual reports.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="relative pl-6 sm:pl-8 group">
+          <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border-2 border-brand-violet group-hover:bg-brand-violet group-hover:scale-125 transition transform"></div>
+          <div class="sm:absolute sm:-left-36 sm:top-1 text-xs font-mono text-slate-400 mb-2 sm:mb-0">
+            Internship
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl space-y-3 hover:border-brand-violet/40 transition">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <h4 class="text-lg font-bold text-white">Web Development Intern</h4>
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-brand-violet/10 text-brand-violet border border-brand-violet/30 w-fit">
+                CodeAlpha
+              </span>
+            </div>
+            <ul class="text-slate-300 text-sm space-y-2 list-disc list-inside">
+              <li>Designed and implemented responsive web user interfaces using HTML5, CSS3, JavaScript, and React.</li>
+              <li>Integrated front-end views with REST APIs and enhanced client side usability.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="relative pl-6 sm:pl-8 group">
+          <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border-2 border-blue-500 group-hover:bg-blue-500 group-hover:scale-125 transition transform"></div>
+          <div class="sm:absolute sm:-left-36 sm:top-1 text-xs font-mono text-slate-400 mb-2 sm:mb-0">
+            Internship
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl space-y-3 hover:border-blue-500/40 transition">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <h4 class="text-lg font-bold text-white">Web Development Intern</h4>
+              <span class="px-3 py-1 rounded-full text-xs font-mono bg-blue-500/10 text-blue-400 border border-blue-500/30 w-fit">
+                SkillCraft Technology
+              </span>
+            </div>
+            <ul class="text-slate-300 text-sm space-y-2 list-disc list-inside">
+              <li>Developed web applications with JavaScript interactive features and dynamic components.</li>
+              <li>Maintained code repositories on GitHub and collaborated through version control.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section id="contact" class="relative z-10 py-24 px-4 sm:px-8 bg-brand-dark/80 border-t border-slate-900">
+    <div class="max-w-6xl mx-auto space-y-12">
+      
+      <div class="text-center space-y-3">
+        <h2 class="text-xs font-mono tracking-widest text-brand-cyan uppercase">// Reach Out</h2>
+        <h3 class="text-3xl sm:text-4xl font-extrabold text-white">Contact Kukkala Hari Venkat</h3>
+        <div class="w-16 h-1 bg-gradient-to-r from-brand-cyan to-brand-violet mx-auto rounded-full"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Contact Details Left -->
+        <div class="lg:col-span-5 glass-card p-8 rounded-3xl space-y-6">
+          <h4 class="text-2xl font-bold text-white">Get in Touch</h4>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Open for full-time engineering roles, data analyst opportunities, and web development projects.
+          </p>
+
+          <div class="space-y-4">
+            <!-- LinkedIn Info Card -->
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div class="p-3 rounded-xl bg-[#0a66c2]/10 text-[#0a66c2]">
+                <i data-lucide="linkedin" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">LinkedIn Profile</div>
+                <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" class="text-sm font-semibold text-[#0a66c2] hover:underline">
+                  linkedin.com/in/kukkala-hari-venkat
+                </a>
+              </div>
+            </div>
+
+            <!-- GitHub Info Card -->
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div class="p-3 rounded-xl bg-brand-cyan/10 text-brand-cyan">
+                <i data-lucide="github" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">GitHub Handle</div>
+                <a href="https://github.com/khari120624-a11y" target="_blank" class="text-sm font-semibold text-brand-cyan hover:underline">
+                  khari120624-a11y
+                </a>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div class="p-3 rounded-xl bg-brand-violet/10 text-brand-violet">
+                <i data-lucide="globe" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">Featured Application</div>
+                <a href="https://moodstream-2zap.onrender.com" target="_blank" class="text-sm font-semibold text-slate-200 hover:text-brand-cyan transition">
+                  MoodStream on Render
+                </a>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div class="p-3 rounded-xl bg-blue-500/10 text-blue-400">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">University</div>
+                <div class="text-sm font-semibold text-slate-200">Vignan University</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <div class="pt-4 border-t border-slate-800 space-y-3">
+            <div class="text-xs font-mono text-slate-400">DIRECT LINKS</div>
+            <div class="flex items-center gap-3">
+              <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" class="p-3 rounded-xl glass-card text-slate-300 hover:text-[#0a66c2] hover:border-[#0a66c2]/50 transition" title="LinkedIn">
+                <i data-lucide="linkedin" class="w-5 h-5"></i>
+              </a>
+              <a href="https://github.com/khari120624-a11y" target="_blank" class="p-3 rounded-xl glass-card text-slate-300 hover:text-white hover:border-brand-cyan/50 transition" title="GitHub">
+                <i data-lucide="github" class="w-5 h-5"></i>
+              </a>
+              <a href="https://moodstream-2zap.onrender.com" target="_blank" class="p-3 rounded-xl glass-card text-slate-300 hover:text-white hover:border-brand-cyan/50 transition" title="MoodStream Live">
+                <i data-lucide="external-link" class="w-5 h-5"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Form Right -->
+        <div class="lg:col-span-7 glass-card p-8 rounded-3xl">
+          <form id="contact-form" class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div class="space-y-1.5">
+                <label class="text-xs font-mono text-slate-300">YOUR NAME *</label>
+                <input type="text" required placeholder="John Doe" class="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-cyan transition" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-xs font-mono text-slate-300">YOUR EMAIL *</label>
+                <input type="email" required placeholder="john@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-cyan transition" />
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-mono text-slate-300">SUBJECT</label>
+              <input type="text" placeholder="Opportunity / Collaboration" class="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-cyan transition" />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-mono text-slate-300">YOUR MESSAGE *</label>
+              <textarea required rows="4" placeholder="Hello Hari, I would like to get in touch..." class="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-cyan transition resize-none"></textarea>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-brand-cyan via-blue-600 to-brand-violet text-slate-950 font-bold text-sm tracking-wider uppercase shadow-lg shadow-brand-cyan/20 hover:shadow-brand-cyan/40 transition flex items-center justify-center gap-2">
+              <span>Send Message</span>
+              <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="relative z-10 py-8 px-4 text-center border-t border-slate-900 text-xs text-slate-500 space-y-2">
+    <p>© 2026 Kukkala Hari Venkat. All rights reserved.</p>
+    <p class="font-mono text-[11px] text-slate-600">
+      <a href="https://www.linkedin.com/in/kukkala-hari-venkat" target="_blank" class="hover:text-[#0a66c2] transition">LinkedIn: Kukkala Hari Venkat</a> | 
+      <a href="https://github.com/khari120624-a11y" target="_blank" class="hover:text-brand-cyan transition">GitHub: khari120624-a11y</a> | 
+      Powered by Three.js & Tailwind CSS
+    </p>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Mobile Navigation Toggle
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      mobileMenu.classList.toggle('flex');
+    });
+
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+      });
+    });
+
+    // Contact Form Submission
+    const contactForm = document.getElementById('contact-form');
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      btn.innerHTML = '<span>Message Sent Successfully!</span> <i data-lucide="check" class="w-4 h-4"></i>';
+      btn.classList.remove('from-brand-cyan');
+      btn.classList.add('from-emerald-400', 'to-teal-500');
+      lucide.createIcons();
+      contactForm.reset();
+      setTimeout(() => {
+        btn.innerHTML = '<span>Send Message</span> <i data-lucide="send" class="w-4 h-4"></i>';
+        btn.classList.add('from-brand-cyan');
+        btn.classList.remove('from-emerald-400', 'to-teal-500');
+        lucide.createIcons();
+      }, 4000);
+    });
+
+    /* ====================================================================
+       1. THREE.JS BACKGROUND SCENE (Interactive Particles & Lights)
+       ==================================================================== */
+    let bgScene, bgCamera, bgRenderer, particleSystem, floatingGeometries = [];
+    let mouseX = 0, mouseY = 0;
+
+    function initBgScene() {
+      const canvas = document.getElementById('bg-canvas');
+      bgScene = new THREE.Scene();
+      
+      bgCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      bgCamera.position.z = 30;
+
+      bgRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      bgRenderer.setSize(window.innerWidth, window.innerHeight);
+      bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // 1. Particle Cloud
+      const particleCount = 220;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+
+      const color1 = new THREE.Color('#00f2fe');
+      const color2 = new THREE.Color('#9d4edd');
+
+      for (let i = 0; i < particleCount * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 80;
+        positions[i + 1] = (Math.random() - 0.5) * 80;
+        positions[i + 2] = (Math.random() - 0.5) * 80;
+
+        const mixedColor = color1.clone().lerp(color2, Math.random());
+        colors[i] = mixedColor.r;
+        colors[i + 1] = mixedColor.g;
+        colors[i + 2] = mixedColor.b;
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const particleMaterial = new THREE.PointsMaterial({
+        size: 0.8,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.7,
+      });
+
+      particleSystem = new THREE.Points(geometry, particleMaterial);
+      bgScene.add(particleSystem);
+
+      // 2. Floating Ambient 3D Wireframe Shapes
+      const shapeMat = new THREE.MeshPhongMaterial({
+        color: 0x0d1527,
+        emissive: 0x00f2fe,
+        emissiveIntensity: 0.2,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.25
+      });
+
+      const shapes = [
+        new THREE.IcosahedronGeometry(4, 0),
+        new THREE.TorusGeometry(3, 1, 16, 50),
+        new THREE.OctahedronGeometry(3, 0)
+      ];
+
+      shapes.forEach((geo, index) => {
+        const mesh = new THREE.Mesh(geo, shapeMat);
+        mesh.position.set((index - 1) * 25, (Math.random() - 0.5) * 20, -10);
+        bgScene.add(mesh);
+        floatingGeometries.push(mesh);
+      });
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      bgScene.add(ambientLight);
+
+      const pointLight = new THREE.PointLight(0x00f2fe, 2, 100);
+      pointLight.position.set(10, 10, 20);
+      bgScene.add(pointLight);
+    }
+
+    /* ====================================================================
+       2. THREE.JS HERO CANVAS (Interactive Glass Knot Mesh)
+       ==================================================================== */
+    let heroScene, heroCamera, heroRenderer, heroMesh;
+    let isDragging = false, previousMousePosition = { x: 0, y: 0 };
+
+    function initHeroScene() {
+      const canvas = document.getElementById('hero-canvas');
+      const rect = canvas.getBoundingClientRect();
+
+      heroScene = new THREE.Scene();
+      heroCamera = new THREE.PerspectiveCamera(45, rect.width / rect.height, 0.1, 1000);
+      heroCamera.position.z = 6;
+
+      heroRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      heroRenderer.setSize(rect.width, rect.height);
+      heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Main Glass-like Torus Knot Geometry
+      const geometry = new THREE.TorusKnotGeometry(1.2, 0.38, 128, 32);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x0d1527,
+        metalness: 0.8,
+        roughness: 0.2,
+        emissive: 0x00f2fe,
+        emissiveIntensity: 0.2,
+      });
+
+      heroMesh = new THREE.Mesh(geometry, material);
+      heroScene.add(heroMesh);
+
+      // Inner Wireframe Accent
+      const wireframeMat = new THREE.MeshBasicMaterial({
+        color: 0x9d4edd,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+      });
+      const wireMesh = new THREE.Mesh(geometry, wireframeMat);
+      wireMesh.scale.set(1.02, 1.02, 1.02);
+      heroMesh.add(wireMesh);
+
+      // Lights
+      const light1 = new THREE.DirectionalLight(0x00f2fe, 1.5);
+      light1.position.set(5, 5, 5);
+      heroScene.add(light1);
+
+      const light2 = new THREE.PointLight(0x9d4edd, 2, 10);
+      light2.position.set(-5, -5, -2);
+      heroScene.add(light2);
+
+      // Mouse drag rotation controls
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener('mouseup', () => isDragging = false);
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const deltaMove = {
+          x: e.clientX - previousMousePosition.x,
+          y: e.clientY - previousMousePosition.y
+        };
+
+        heroMesh.rotation.y += deltaMove.x * 0.01;
+        heroMesh.rotation.x += deltaMove.y * 0.01;
+
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+    }
+
+    /* Track Mouse Movement */
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    /* Resize Listener */
+    window.addEventListener('resize', () => {
+      bgCamera.aspect = window.innerWidth / window.innerHeight;
+      bgCamera.updateProjectionMatrix();
+      bgRenderer.setSize(window.innerWidth, window.innerHeight);
+
+      const heroCanvas = document.getElementById('hero-canvas');
+      if (heroCanvas) {
+        const rect = heroCanvas.parentElement.getBoundingClientRect();
+        heroCamera.aspect = rect.width / rect.height;
+        heroCamera.updateProjectionMatrix();
+        heroRenderer.setSize(rect.width, rect.height);
+      }
+    });
+
+    /* Animation Render Loop */
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (particleSystem) {
+        particleSystem.rotation.y += 0.0008;
+        particleSystem.rotation.x = mouseY * 0.1;
+      }
+
+      floatingGeometries.forEach((geo, i) => {
+        geo.rotation.x += 0.005 * (i + 1);
+        geo.rotation.y += 0.008 * (i + 1);
+      });
+
+      if (heroMesh && !isDragging) {
+        heroMesh.rotation.y += 0.008;
+        heroMesh.rotation.x += 0.004;
+      }
+
+      bgRenderer.render(bgScene, bgCamera);
+      heroRenderer.render(heroScene, heroCamera);
+    }
+
+    // Window Onload Starter
+    window.onload = function() {
+      initBgScene();
+      initHeroScene();
+      animate();
+    };
+
+    /* Interactive Tilt Cards */
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        card.style.transform = `perspective(1000px) rotateX(${-y / 20}deg) rotateY(${x / 20}deg) scale(1.02)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+      });
+    });
+  </script>
+</body>
+</html>
